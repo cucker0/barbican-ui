@@ -35,6 +35,13 @@
   function config($provide, $windowProvider, $routeProvider) {
     var path = $windowProvider.$get().STATIC_URL + 'dashboard/barbican/';
     $provide.constant('horizon.dashboard.barbican.basePath', path);
+    $provide.constant(
+      'horizon.dashboard.barbican.offerdValues', {
+        bitLength: [64, 128, 256, 1024],
+        algorithm: ['aes','des','3des','twofish','sha1','rsa'],
+        mode: ['cbc', 'cfb', 'ctr', 'ecb', 'ofb']
+      }
+    );
   }
   /* eslint-disable no-unused-vars */
 })();

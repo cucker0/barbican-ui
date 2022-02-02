@@ -23,5 +23,27 @@ except ImportError:
     pass
 
 setuptools.setup(
+    name='barbican-ui',
+    version='0.1',
+    summary = 'Barbican User Interface',
+    description_file ='README.rst',
+    author='OpenStack',
+    author_email='openstack-discuss@lists.openstack.org',
+    home_page='http://www.openstack.org/',
+    classifiers=[
+         'Environment :: OpenStack',
+         'Intended Audience :: Information Technology',
+         'Intended Audience :: System Administrators',
+         'License :: OSI Approved :: Apache Software License',
+         'Operating System :: POSIX :: Linux',
+         'Programming Language :: Python',
+         'Programming Language :: Python :: 2',
+         'Programming Language :: Python :: 2.7',
+         'Programming Language :: Python :: 3',
+         'Programming Language :: Python :: 3.6'
+         'Programming Language :: Python :: 3.8'
+    ],
+    packages=setuptools.find_packages(exclude=['tests*']),
+    include_package_data=True,
     setup_requires=['pbr>=2.0.0'],
-    pbr=True)
+    pbr=False)

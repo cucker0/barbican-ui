@@ -58,18 +58,11 @@
       allowed: allowed,
       perform: perform
     };
-    var notAllowedMessage =
-      gettext("You are not allowed to delete secrets: %s");
+    var notAllowedMessage = gettext('You are not allowed to delete secrets: %s');
 
     return service;
 
-    //////////////
-
-    // fixme: include this function in your service
-    // if you plan to emit events to the parent controller,
-    // otherwise remove it
-    function initAction() {
-    }
+    function initAction() {}
 
     function allowed() {
       return $qExtensions.booleanAsPromise(true);
@@ -131,7 +124,7 @@
         result.failed(resourceType, getEntity(item).id);
       });
       if (result.result.failed.length === 0 && result.result.deleted.length > 0) {
-        $location.path('/barbican/secrets');
+        $location.path('/project/secrets');
       } else {
         $rootScope.$broadcast(tableEvents.CLEAR_SELECTIONS);
         return result.result;

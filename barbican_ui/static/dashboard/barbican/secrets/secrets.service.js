@@ -13,7 +13,7 @@
  */
 
 (function() {
-  "use strict";
+  'use strict';
 
   angular.module('horizon.dashboard.barbican.secrets')
     .factory('horizon.dashboard.barbican.secrets.service',
@@ -31,10 +31,11 @@
    *
    * @description
    * This service provides functions that are used through the Secrets
-   * features.  These are primarily used in the module registrations
-   * but do not need to be restricted to such use.  Each exposed function
+   * features. These are primarily used in the module registrations
+   * but do not need to be restricted to such use. Each exposed function
    * is documented below.
    */
+
   function service($filter, detailRoute, api) {
     return {
       getPromise: getPromise,
@@ -46,10 +47,11 @@
     }
 
     function modifyResponse(response) {
-      return {data: {items: response.data.items.map(modifyItem)}};
+      var newRes = {data: {items: response.data.items.map(modifyItem)}};
+      return newRes;
 
       function modifyItem(item) {
-        var timestamp = item.updated_at ? item.updated_at : item.created_at;
+        var timestamp = item.updated_at ? item.updated : item.created;
         item.trackBy = item.id.concat(timestamp);
         return item;
       }
@@ -60,4 +62,3 @@
     }
   }
 })();
-

@@ -77,38 +77,43 @@
       urlFunction: service.urlFunction
     })
     .append({
-      id: 'size',
+      id: 'content_types',
       priority: 1,
       filters: ['noValue']
     })
     .append({
-      id: 'temperature',
+      id: 'algorithm',
       priority: 1,
       filters: ['noValue']
     })
     .append({
-      id: 'base',
+      id: 'bit_length',
       priority: 1,
       filters: ['noValue']
     })
     .append({
-      id: 'flavor',
+      id: 'status',
       priority: 1,
       filters: ['noValue']
     })
     .append({
-      id: 'topping',
+      id: 'mode',
       priority: 2,
       filters: ['noValue']
     })
     .append({
-      id: 'created_at',
+      id: 'created',
       priority: 2
     })
     .append({
-      id: 'updated_at',
+      id: 'updated',
+      priority: 2
+    })
+    .append({
+      id: 'expiration',
       priority: 2
     });
+
     // for magic-search
     registry.getResourceType(resourceType).filterFacets
     .append({
@@ -122,8 +127,8 @@
       'singleton': true
     })
     .append({
-      'label': gettext('Flavor'),
-      'name': 'flavor',
+      'label': gettext('status'),
+      'name': 'status',
       'singleton': true
     })
     .append({
@@ -137,15 +142,23 @@
     return {
       id: { label: gettext('ID'), filters: ['noValue'] },
       name: { label: gettext('Name'), filters: ['noName'] },
+      secret_ref: { label: gettext('Url'), filters: ['noName'] },
       description: { label: gettext('Description'), filters: ['noValue'] },
-      enabled: { label: gettext('Enabled'), filters: ['yesno'] },
-      size: { label: gettext('Size'), filters: ['noValue'] },
-      temperature: { label: gettext('Temperature'), filters: ['noValue'] },
-      base: { label: gettext('Base'), filters: ['noValue'] },
-      flavor: { label: gettext('Flavor'), filters: ['noValue'] },
-      topping: { label: gettext('Topping'), filters: ['noValue'] },
-      created_at: { label: gettext('Created'), filters: ['simpleDate', 'noValue'] },
-      updated_at: { label: gettext('Updated'), filters: ['simpleDate', 'noValue'] }
+      content_types: {
+        label: gettext('Content Type'),
+        filters: [
+          'noValue',
+          function(item) {
+            return item.default;
+          }]
+      },
+      algorithm: { label: gettext('Algorithm'), filters: ['noValue'] },
+      bit_length: { label: gettext('Bit Length'), filters: ['noValue'] },
+      status: { label: gettext('Status'), filters: ['noValue'] },
+      mode: { label: gettext('Mode'), filters: ['noValue'] },
+      expiration: { label: gettext('Expiration'), filters: ['simpleDate', 'noValue'] },
+      created: { label: gettext('Created'), filters: ['simpleDate', 'noValue'] },
+      updated: { label: gettext('Updated'), filters: ['simpleDate', 'noValue'] }
     };
   }
 
@@ -166,7 +179,7 @@
   function config($provide, $windowProvider, $routeProvider) {
     var path = $windowProvider.$get().STATIC_URL + 'dashboard/barbican/secrets/';
     $provide.constant('horizon.dashboard.barbican.secrets.basePath', path);
-    $routeProvider.when('/barbican/secrets', {
+    $routeProvider.when('/project/secrets', {
       templateUrl: path + 'panel.html'
     });
   }

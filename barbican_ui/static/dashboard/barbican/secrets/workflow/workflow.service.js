@@ -13,7 +13,6 @@
  */
 
 (function() {
-  'use strict';
 
   /**
    * @ngdoc workflow
@@ -27,185 +26,37 @@
   workflow.$inject = [
     'horizon.dashboard.barbican.basePath',
     'horizon.framework.util.i18n.gettext',
-    'horizon.framework.widgets.form.ModalFormService'
+    'horizon.framework.widgets.form.ModalFormService',
+    'horizon.dashboard.barbican.offerdValues',
+    'horizon.dashboard.barbican.secrets.workflow.schemaFactory',
+    'horizon.dashboard.barbican.secrets.workflow.formFactory'
   ];
 
-  function workflow(basePath, gettext, modal) {
+  function workflow(basePath, gettext, modal, offerdValues, schemaFactory, formFactory) {
+
     var workflow = {
-      init: init
+      initCreate: initCreate,
+      initUpdate: initUpdate
     };
 
-    function init(title, submitText, submitIcon, model) {
-      var schema, form;
-
-      // schema
-      schema = {
-        "type": "object",
-        "properties": {
-          "name": {
-            "title": gettext("Name"),
-            "type": "string"
-          },
-          "description": {
-            "title": gettext("Description"),
-            "type": "string"
-          },
-          "enabled": {
-            "title": gettext("Enabled"),
-            "type": "boolean",
-            "default": true
-          },
-          "size": {
-            "title": gettext("Size"),
-            "type": "string",
-            "default": "M"
-          },
-          "temperature": {
-            "title": gettext("Temperature"),
-            "type": "string",
-            "default": "H"
-          },
-          "base": {
-            "title": gettext("Base"),
-            "type": "string",
-            "default": ""
-          },
-          "flavor": {
-            "title": gettext("Flavor"),
-            "type": "string",
-            "default": ""
-          },
-          "topping": {
-            "title": gettext("Topping")
-          }
-        }
-      };
-
-      // form
-      form = [
-        {
-          "type": "tabs",
-          "tabs": [
-            {
-              "title": gettext("Info"),
-              "help": basePath + "secrets/workflow/info.help.html",
-              "items": [
-                {
-                  "key": "name",
-                  "placeholder": gettext("Name of the secret."),
-                  "required": true
-                },
-                {
-                  "key": "description",
-                  "type": "textarea"
-                },
-                {
-                  "key": "enabled",
-                  "type": "checkbox"
-                }
-              ]
-            },
-            {
-              "title": gettext("Recipe"),
-              "help": basePath + "secrets/workflow/recipe.help.html",
-              "items": [
-                {
-                  "key": "size",
-                  "type": "radiobuttons",
-                  "titleMap": [
-                    {"value": "S", "name": gettext("Small")},
-                    {"value": "M", "name": gettext("Medium")},
-                    {"value": "L", "name": gettext("Large")},
-                    {"value": "XL", "name": gettext("Extra Large")}
-                  ]
-                },
-                {
-                  "key": "temperature",
-                  "type": "radiobuttons",
-                  "titleMap": [
-                    {"value": "H", "name": gettext("Hot")},
-                    {"value": "I", "name": gettext("Ice")}
-                  ]
-                },
-                {
-                  "key": "base",
-                  "type": "select",
-                  "titleMap": [
-                    {"value": "", "name": gettext("Choose base.")},
-                    {
-                      "value": "blend",
-                      "name": gettext("House Blend"),
-                      "group": gettext("Coffee")
-                    },
-                    {
-                      "value": "mandheling",
-                      "name": gettext("Mandheling"),
-                      "group": gettext("Coffee")},
-                    {
-                      "value": "colombia",
-                      "name": gettext("Colombia"),
-                      "group": gettext("Coffee")
-                    },
-                    {
-                      "value": "espresso",
-                      "name": gettext("Espresso"),
-                      "group": gettext("Coffee")
-                    },
-                    {
-                      "value": "earl_gray",
-                      "name": gettext("Earl Gray"),
-                      "group": gettext("Tea")
-                    },
-                    {
-                      "value": "darjeeling",
-                      "name": gettext("Darjeeling"),
-                      "group": gettext("Tea")},
-                    {
-                      "value": "orange_pekoe",
-                      "name": gettext("Orange Pekoe"),
-                      "group": gettext("Tea")
-                    }
-                  ]
-                },
-                {
-                  "key": "flavor",
-                  "type": "select",
-                  "titleMap": [
-                    {"value": "", "name": gettext("Choose flavor.")},
-                    {"value": "chocolate", "name": gettext("Chocolate")},
-                    {"value": "mocha", "name": gettext("Mocha")},
-                    {"value": "strawberry", "name": gettext("Strawberry")},
-                    {"value": "blueberry", "name": gettext("Blueberry")},
-                    {"value": "raspberry", "name": gettext("Raspberry")}
-                  ]
-                },
-                {
-                  "key": "topping",
-                  "type": "checkboxes",
-                  "titleMap": [
-                    {"value": "clushed_nuts", "name": gettext("Clushed Nuts")},
-                    {"value": "whip_cream", "name": gettext("Whip Cream")},
-                    {"value": "mixed_serial", "name": gettext("Mixed Serial")}
-                  ]
-                }
-              ] // items
-            } // tab
-          ] // tabs
-        }
-      ]; // form
-
-      var config = {
-        "title": title,
-        "submitText": submitText,
-        "schema": schema,
-        "form": form,
-        "model": model
-      };
-
-      return modal.open(config);
+    function initCreate(title, submitText, submitIcon, model) {
+      return init(title, submitText, submitIcon, model, 'create');
     }
 
+    function initUpdate(title, submitText, submitIcon, model) {
+      return init(title, submitText, submitIcon, model, 'update');
+    }
+
+    function init(title, submitText, submitIcon, model, mode) {
+      var config = {
+        'title': title,
+        'submitText': submitText,
+        'schema': schemaFactory.init(mode),
+        'form': formFactory.init(model, mode),
+        'model': model
+      };
+      return modal.open(config);
+    }
     return workflow;
   }
 })();
-

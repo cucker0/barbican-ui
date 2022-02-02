@@ -11,6 +11,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+ 
 (function() {
   'use strict';
 
@@ -19,5 +20,4 @@
       expect(angular.module('horizon.dashboard.barbican.secrets')).toBeDefined();
     });
   });
-
 })();

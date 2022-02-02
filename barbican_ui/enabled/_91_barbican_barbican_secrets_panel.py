@@ -15,7 +15,7 @@ PANEL = 'secrets'
 # The slug of the panel group the PANEL is associated with.
 PANEL_GROUP = 'barbican'
 # The slug of the dashboard the PANEL associated with. Required.
-PANEL_DASHBOARD = 'barbican'
+PANEL_DASHBOARD = 'project'
 
 # Python panel class of the PANEL to be added.
 ADD_PANEL = 'barbican_ui.content.secrets.panel.Secrets'

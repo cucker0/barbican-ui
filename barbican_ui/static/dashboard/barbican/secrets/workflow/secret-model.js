@@ -24,40 +24,70 @@
     .module('horizon.dashboard.barbican.secrets')
     .factory('horizon.dashboard.barbican.secrets.model', model);
 
-  model.$inject = [
-  ];
+  model.$inject = [];
 
   function model() {
     var model = {
-      // params
-      "spec": {},
-
-      // methods
-      "init": init,
-      "cleanProperties": cleanProperties
+      spec: {},
+      init: init,
+      cleanProperties: cleanProperties
     };
 
     function init() {
-      // initialize model
       model.spec = {
-        "id": "",
-        "name": "",  // text required
-        "description": "",  // textarea
-        "enabled": true,  // checkbox
-        "size": "M",  // radio
-        "temperature": "H",  // radio
-        "base": "",  // select
-        "flavor": "",  // select
-        "topping": ""  // checkboxes
+        id: '',
+        name: ''
       };
     }
 
     function cleanProperties() {
-      delete model.spec.id;
-      delete model.spec.tabs;
-    }
+      var customProperties = {};
+      Object.keys(model.spec).forEach(function(customKey) {
+        if(customKey.startsWith('custom')) {
+          var key = customKey.replace('custom', '');
+          if (model.spec[key] == 'custom') {
+            customProperties[key] = model.spec[customKey];
+          }
+          delete model.spec[customKey];
+        }
+      });
 
+      model.spec = Object.assign(model.spec, customProperties);
+
+      if(
+        'payloadContentType' in model.spec &&
+        model.spec.payloadContentType == 'application/octet-stream'
+      ) {
+        model.spec.payload = model.spec.payloadFile;
+        model.spec.payload_content_encoding = 'base64';
+        delete model.spec.payloadFile;
+      }
+
+      if('expirationDate' in model.spec && 'expirationTime' in model.spec) {
+        var dateInput = new Date(model.spec.expirationDate);
+        var timeInput = new Date(model.spec.expirationTime);
+
+        dateInput.setHours(timeInput.getHours(), timeInput.getMinutes(), timeInput.getSeconds(), 0);
+
+        model.spec.expiration = dateInput.toISOString();
+      }
+
+      delete model.spec.expirationDate;
+      delete model.spec.expirationTime;
+
+      delete model.spec.id;
+      delete model.spec.custom;
+
+      if('bitLength' in model.spec) {
+        model.spec.bitLength = parseInt(model.spec.bitLength);
+      }
+
+      Object.keys(model.spec).forEach(function(key) {
+        if(model.spec[key] == '' || Number.isNaN(model.spec[key])) {
+          delete model.spec[key];
+        }
+      });
+    }
     return model;
   }
 })();
-

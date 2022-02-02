@@ -53,27 +53,20 @@
       allowed: allowed
     };
 
+    function initAction() {}
+
     return service;
 
-    //////////////
-
-    // fixme: include this function in your service
-    // if you plan to emit events to the parent controller,
-    // otherwise remove it
-    function initAction() {
-    }
-
-    // fixme: if newScope is unnecessary, remove it
     /* eslint-disable no-unused-vars */
-    function perform(selected, newScope) {
+    function perform(selected) {
       // modal title, buttons
       var title, submitText, submitIcon;
-      title = gettext("Create Secret");
-      submitText = gettext("Create");
+      title = gettext('Create Secret');
+      submitText = gettext('Create');
       submitIcon = "fa fa-check";
       model.init();
 
-      var result = workflow.init(title, submitText, submitIcon, model.spec);
+      var result = workflow.initCreate(title, submitText, submitIcon, model.spec);
       return result.then(submit);
     }
 
@@ -94,7 +87,7 @@
       var result = actionResult.getActionResult()
                    .created(resourceType, response.data.id);
       if (result.result.failed.length === 0 && result.result.created.length > 0) {
-        $location.path('/barbican/secrets');
+        $location.path('/project/secrets');
       } else {
         return result.result;
       }

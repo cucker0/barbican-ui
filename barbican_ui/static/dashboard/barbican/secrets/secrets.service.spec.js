@@ -46,8 +46,5 @@
         expect(result).toBe(detailRoute + "OS::Barbican::Secret/123abc");
       }));
     });
-
   });
-
 })();
-

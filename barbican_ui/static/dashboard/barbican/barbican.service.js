@@ -30,18 +30,24 @@
       getSecrets: getSecrets,
       createSecret: createSecret,
       updateSecret: updateSecret,
-      deleteSecret: deleteSecret
+      deleteSecret: deleteSecret,
+      getPayload: getPayload
     };
 
     return service;
 
-    ///////////////////////////////
-    // Secrets
-
     function getSecret(id) {
       return apiService.get('/api/barbican/secrets/' + id)
         .error(function() {
-          var msg = gettext('Unable to retrieve the Secret with id: %(id)s.');
+          var msg = gettext('Unable to retrieve the Secret with id: %(id).');
+          toastService.add('error', interpolate(msg, {id: id}, true));
+        });
+    }
+
+    function getPayload(id) {
+      return apiService.get('/api/barbican/payload/' + id)
+        .error(function() {
+          var msg = gettext('Unable to retrieve the Secret Payload with id: %(id).');
           toastService.add('error', interpolate(msg, {id: id}, true));
         });
     }
@@ -63,9 +69,12 @@
 
     function updateSecret(id, params) {
       return apiService.post('/api/barbican/secrets/' + id, params)
-        .error(function() {
-          var msg = gettext('Unable to update the Secret with id: %(id)s');
-          toastService.add('error', interpolate(msg, { id: params.id }, true));
+        .error(function(error) {
+          var msg = gettext('Unable to update the secret.');
+          if('status_code' in error && error.status_code == 409) {
+            msg = gettext('Only empty secrets can be updated with a value.');
+          }
+          toastService.add('error', interpolate(msg, {}, true));
         });
     }
 

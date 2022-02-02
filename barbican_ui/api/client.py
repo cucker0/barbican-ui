@@ -11,128 +11,161 @@
 #    under the License.
 
 
-from __future__ import absolute_import
 
 import logging
+import time
 
-# enable following after client product implemented.
-# from barbicanclient.v1 import client as barbican_client
+import openstack_auth
 
 from horizon import exceptions
 from horizon.utils.memoized import memoized
 from openstack_dashboard.api import base
-
-# for stab, should remove when use CLI API
-import copy
-from datetime import datetime
-import uuid
+from barbicanclient import client as barbican_client
+from barbicanclient.exceptions import HTTPClientError
 
 
 LOG = logging.getLogger(__name__)
 
-ATTRIBUTES = ['name', 'description', 'enabled', 'size', 'temperature',
-              'base', 'flavor', 'topping']
+ATTRIBUTE_NAMES = [
+    'secret_ref',
+    'name',
+    'expiration',
+    'algorithm',
+    'bit_length',
+    'secret_type',
+    'mode',
+    'payload_content_encoding',
+    'created',
+    'updated',
+    'content_types',
+    'status',
+    'payload',
+    'payload_content_type'
+]
 
-STUB_DATA = {}
+def get_auth_params_from_request(request):
+    return (
+    request.user.username,
+    request.user.token.id,
+    request.user.tenant_id,
+    request.user.token.project.get('domain_id'),
+    base.url_for(request, 'key-manager'),
+    base.url_for(request, 'identity')
+    )
 
+def map_arguments(arguments):
+    new_arguments = {}
 
-# for stab, should be removed when use CLI API
-class StubResponse(object):
+    argument_mapping = dict(zip(
+    list(map(lambda name: name.replace('_', '').lower(), ATTRIBUTE_NAMES)),
+    ATTRIBUTE_NAMES
+    ))
 
-    def __init__(self, info):
-        self._info = info
+    for (name, value) in arguments.items():
+        unified_name = name.replace('_', '').lower()
 
-    def __repr__(self):
-        reprkeys = sorted(k for k in self.__dict__.keys() if k[0] != '_')
-        info = ", ".join("%s=%s" % (k, getattr(self, k)) for k in reprkeys)
-        return "<%s %s>" % (self.__class__.__name__, info)
+        if unified_name in argument_mapping:
+            new_name = argument_mapping[unified_name]
+            new_arguments[new_name] = value
+        else:
+            LOG.debug("Key must be in %s" % ",".join(ATTRIBUTE_NAMES))
+            raise exceptions.BadRequest(
+                "Key must be in %s" % ",".join(ATTRIBUTE_NAMES)
+            )
 
-    def to_dict(self):
-        return copy.deepcopy(self._info)
+    return new_arguments
 
 
 @memoized
-def apiclient(request):
-    api_url = ""
-    c = None
-
-    try:
-        api_url = base.url_for(request, 'secret')
-    except exceptions.ServiceCatalogException:
-        LOG.debug('No Secret Management service is configured.')
-        return None
+def apiclient(request, version=None):
+    (
+        username,
+        token_id,
+        project_id,
+        project_domain_id,
+        barbican_url,
+        auth_url
+    ) = get_auth_params_from_request(request)
 
     LOG.debug('barbicanclient connection created using the token "%s" and url'
-              '"%s"' % (request.user.token.id, api_url))
-    # enable following after client product implemented.
-    # c = barbican_client.Client(
-    #     username=request.user.username,
-    #     project_id=request.user.tenant_id,
-    #     input_auth_token=request.user.token.id,
-    #     api_url=api_url)
-    return c
+              '"%s"' % (request.user.token.id, barbican_url))
+
+    auth = openstack_auth.utils.get_token_auth_plugin(
+        auth_url=auth_url,
+        token=token_id,
+        project_id=project_id
+    )
+    session = openstack_auth.utils.get_session()
+    session.auth = auth
+
+    return barbican_client.Client(
+        session=session,
+        endpoint=barbican_url,
+        project_id=project_id
+    )
 
 
 def secret_create(request, **kwargs):
-    args = {}
-    for (key, value) in kwargs.items():
-        if key in ATTRIBUTES:
-            args[str(key)] = value
-        else:
-            raise exceptions.BadRequest(
-                "Key must be in %s" % ",".join(ATTRIBUTES))
-    # created = apiclient(request).secrets.create(**args)
+    kwargs = map_arguments(kwargs)
+    new_secret = apiclient(request).secrets.create(
+        **kwargs
+    )
 
-    # create dummy response
-    args["uuid"] = uuid.uuid1().hex
-    args["created_at"] = datetime.now().isoformat()
-    created = StubResponse(args)
-    for k in args:
-        setattr(created, k, args[k])
-    STUB_DATA[created.uuid] = created
-
-    return created
+    new_secret.store()
+    return new_secret
 
 
-def secret_update(request, id, **kwargs):
-    args = {}
-    for (key, value) in kwargs.items():
-        if key in ATTRIBUTES:
-            args[str(key)] = value
-        else:
-            raise exceptions.BadRequest(
-                "Key must be in %s" % ",".join(ATTRIBUTES))
-    # updated = apiclient(request).secret.update(id, **args)
+def secret_update(request, secret_ref, **kwargs):
+    payload = None
+    kwargs = map_arguments(kwargs)
 
-    # update dummy response
-    args["uuid"] = id
-    args["updated_at"] = datetime.now().isoformat()
-    updated = StubResponse(args)
-    for k in args:
-        setattr(updated, k, args[k])
-    STUB_DATA[updated.uuid] = updated
+    if 'payload' in kwargs:
+        payload = kwargs['payload']
+    else:
+        raise exceptions.BadRequest(
+            'No payload provided in request.'
+        )
 
-    return updated
+    return apiclient(request).secrets.update(secret_ref, payload)
 
 
-def secret_delete(request, id):
-    # deleted = apiclient(request).secrets.delete(id)
-    deleted = STUB_DATA.pop(id)
-
-    return deleted
+def secret_delete(request, secret_ref_id):
+    apiclient(request).secrets.delete(secret_ref_id)
+    return True
 
 
 def secret_list(
-        request, limit=None, marker=None, sort_key=None,
-        sort_dir=None, detail=True):
+        request, limit=None, offset=None, sort_key=None,
+        sort_dir=None, detail=True
+):
+    # TODO: read secrets with pagination
+    if limit is None:
+        limit = 100
+        offset = 0
 
-    # list = apiclient(request).Secrets.list(limit, marker, sort_key,
-    #                                             sort_dir, detail)
-    list = [STUB_DATA[data] for data in STUB_DATA]
-    return list
+    found_end = False
+    secrets = []
+
+    while not found_end:
+        secret_list_part = apiclient(request).secrets.list(
+            limit=limit,
+            offset=offset
+        )
+
+        secrets += secret_list_part
+        if len(secret_list_part) < limit:
+            found_end = True
+        else:
+            offset += limit
+
+    return secrets
 
 
-def secret_show(request, id):
-    # show = apiclient(request).secrets.get(id)
-    show = STUB_DATA.get(id)
-    return show
+def secret_show(request, secret_ref_id):
+    secret = apiclient(request).secrets.get(secret_ref_id)
+    return secret
+
+
+def payload_show(request, secret_ref_id):
+    secret = apiclient(request).secrets.get(secret_ref_id)
+    return secret.payload

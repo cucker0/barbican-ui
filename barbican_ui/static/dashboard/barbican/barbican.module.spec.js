@@ -19,5 +19,4 @@
       expect(angular.module('horizon.dashboard.barbican')).toBeDefined();
     });
   });
-
 })();

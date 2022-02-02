@@ -1,12 +1,12 @@
 /**
- * Licensed under the Apache License, Version 2.0 (the "License"); you may
+ * Licensed under the Apache License, Version 2.0 (the 'License'); you may
  * not use this file except in compliance with the License. You may obtain
  * a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * distributed under the License is distributed on an 'AS IS' BASIS, WITHOUT
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations
  * under the License.
@@ -35,12 +35,13 @@
     'horizon.dashboard.barbican.secrets.events',
     'horizon.dashboard.barbican.secrets.model',
     'horizon.dashboard.barbican.secrets.resourceType',
-    'horizon.dashboard.barbican.secrets.workflow'
+    'horizon.dashboard.barbican.secrets.workflow',
+    'horizon.dashboard.barbican.offerdValues'
   ];
 
   function updateService(
     $location, api, policy, actionResult, gettext, $qExtensions,
-    toast, events, model, resourceType, workflow
+    toast, events, model, resourceType, workflow, offerdValues
   ) {
 
     var message = {
@@ -57,22 +58,15 @@
 
     return service;
 
-    //////////////
+    function initAction() {}
 
-    // fixme: include this function in your service
-    // if you plan to emit events to the parent controller,
-    // otherwise remove it
-    function initAction() {
-    }
-
-    // fixme: if newScope is unnecessary, remove it
     /* eslint-disable no-unused-vars */
-    function perform(selected, newScope) {
+    function perform(selected) {
       // modal title, buttons
       var title, submitText, submitIcon;
-      title = gettext("Update Secret");
-      submitText = gettext("Update");
-      submitIcon = "fa fa-check";
+      title = gettext('Update Secret');
+      submitText = gettext('Update');
+      submitIcon = 'fa fa-check';
       model.init();
 
       // load current data
@@ -83,16 +77,48 @@
       function onLoad(response) {
         model.spec.id = response.data.id;
         model.spec.name = response.data.name;
-        model.spec.description = response.data.description;
-        model.spec.enabled = response.data.enabled;
-        model.spec.size = response.data.size;
-        model.spec.temperature = response.data.temperature;
-        model.spec.base = response.data.base;
-        model.spec.flavor = response.data.flavor;
-        model.spec.topping = response.data.topping;
+        model.spec.mode = response.data.mode;
+        model.spec.payload_content_encoding = response.data.payload_content_encoding;
+        model.spec.payload_content_type = response.data.payload_content_type;
+        model.spec.secret_type = response.data.secret_type;
+        model.spec.bit_length = response.data.bit_length;
+        model.spec.algorithm = response.data.algorithm;
+
+        if(model.spec.bit_length != null && !(model.spec.bit_length in offerdValues.bitLength)) {
+          model.spec.custom_bit_length = model.spec.bit_length;
+          model.spec.bit_length = 'custom';
+        }
+
+        if(model.spec.bit_length == null) {
+          model.spec.bit_length = '';
+        }
+
+        if(model.spec.algorithm != null && !(model.spec.algorithm in offerdValues.algorithm)) {
+          model.spec.custom_algorithm = model.spec.algorithm;
+          model.spec.algorithm = 'custom';
+        }
+
+        if(model.spec.algorithm == null) {
+          model.spec.algorithm = '';
+        }
+
+        if(model.spec.mode != null && !(model.spec.mode in offerdValues.mode)) {
+          model.spec.custom_mode = model.spec.mode;
+          model.spec.mode = 'custom';
+        }
+
+        if(model.spec.mode == null) {
+          model.spec.mode = '';
+        }
+
+        if(model.spec.expiration != null) {
+          var expirationDate = new Date(model.spec.expiration);
+          model.spec.expiration_date = expirationDate;
+          model.spec.expiration_time = expirationDate;
+        }
       }
 
-      var result = workflow.init(title, submitText, submitIcon, model.spec);
+      var result = workflow.initUpdate(title, submitText, submitIcon, model.spec);
       return result.then(submit);
     }
 
@@ -113,7 +139,7 @@
       var result = actionResult.getActionResult()
                    .updated(resourceType, response.data.id);
       if (result.result.failed.length === 0 && result.result.updated.length > 0) {
-        $location.path('/barbican/secrets');
+        $location.path('/project/secrets');
       } else {
         return result.result;
       }
