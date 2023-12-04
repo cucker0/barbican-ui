@@ -8,10 +8,25 @@ Barbican User Interface
 * Source: http://opendev.org/openstack/barbican-ui
 * Bugs: https://storyboard.openstack.org/#!/project/openstack/barbican-ui
 
+Depends on
+----------
+* Keystone
+* Barbican
+* Horizon
+
+Change logs
+-----------
+* The barbican-ui on the official is too old to adapt to the new version of Horizon, fork from https://github.com/kleberrangel/barbican-ui to adapt to the new version of Horizon
+* Update ``Manual Installation`` of README.rst
+
 Features
 --------
+* Manage Secrets
+    * Create Secrets
+    * List and Get Secrets
+    * Update Secrets
+    * Delete Secrets
 
-* TODO
 
 Enabling in DevStack
 --------------------
@@ -19,46 +34,44 @@ Enabling in DevStack
 Add this repo as an external repository into your ``local.conf`` file::
 
     [[local|localrc]]
-    enable_plugin barbican_ui https://github.com/openstack/barbican-ui
+    # enable_plugin barbican_ui https://github.com/openstack/barbican-ui
+    enable_plugin barbican_ui https://github.com/cucker0/barbican-ui
 
 Manual Installation
 -------------------
+This section describes how to install and configure the barbican-ui for Rocky Linux 9.
 
-Begin by cloning the Horizon and Barbican UI repositories::
+* Horizon reference https://docs.openstack.org/horizon/latest/
 
-    git clone https://github.com/openstack/horizon
-    git clone https://github.com/openstack/barbican-ui
 
-Create a virtual environment and install Horizon dependencies::
+1. Clone barbican-ui from git repository::
 
-    cd horizon
-    python tools/install_venv.py
+    #git clone https://github.com/openstack/barbican-ui
+    git clone https://github.com/cucker0/barbican-ui
 
-Set up your ``local_settings.py`` file::
+2. Install barbican-ui::
 
-    cp openstack_dashboard/local/local_settings.py.example openstack_dashboard/local/local_settings.py
+    cd barbican-ui
+    pip3 install -r ./requirements.txt
+    pip3 install .
 
-Open up the copied ``local_settings.py`` file in your preferred text
-editor. You will want to customize several settings:
+3. Enable barbican-ui in your Horizon::
 
--  ``OPENSTACK_HOST`` should be configured with the hostname of your
-   OpenStack server. Verify that the ``OPENSTACK_KEYSTONE_URL`` and
-   ``OPENSTACK_KEYSTONE_DEFAULT_ROLE`` settings are correct for your
-   environment. (They should be correct unless you modified your
-   OpenStack server to change them.)
+    # Root of Openstack Dashboard, use `whereis openstack-dashboard` to find out it
+    HORIZON_SITE_ROOT=/usr/share/openstack-dashboard
 
-Install Barbican UI with all dependencies in your virtual environment::
+    cp ./barbican_ui/enabled/* $HORIZON_SITE_ROOT/openstack_dashboard/local/enabled/
 
-    tools/with_venv.sh pip install -e ../barbican-ui/
+4. Run collectstatic command::
 
-And enable it in Horizon::
+    python3 $HORIZON_SITE_ROOT/manage.py collectstatic -c
 
-    ln -s ../barbican-ui/barbican_ui/enabled/_90_project_barbican_panelgroup.py openstack_dashboard/local/enabled
-    ln -s ../barbican-ui/barbican_ui/enabled/_91_project_barbican_secrets_panel.py openstack_dashboard/local/enabled
+5. Compress static files::
 
-To run horizon with the newly enabled Barbican UI plugin run::
+    python3 $HORIZON_SITE_ROOT/manage.py compress
 
-    ./run_tests.sh --runserver 0.0.0.0:8080
+6. Restart your Horizon service::
 
-to have the application start on port 8080 and the horizon dashboard will be
-available in your browser at http://localhost:8080/
+    systemctl restart httpd.service
+
+7. After restart your Horizon, reload dashboard forcely using [Ctrl + F5] or etc. in your browser
